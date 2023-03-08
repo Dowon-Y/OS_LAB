@@ -52,8 +52,8 @@ struct PCB handle_process_completion_pp(struct PCB ready_queue[QUEUEMAX], int *q
     if (!*queue_cnt) { return NULLPCB; }
 
     // search the next PCB
-    int i, highestPriorty = INT_MAX, priorityIdx = 0;
-    for (i = 0; i < *queue_cnt; i++) {
+    int highestPriorty = INT_MAX, priorityIdx = 0;
+    for (int i = 0; i < *queue_cnt; i++) {
         if (ready_queue[i].process_priority < highestPriorty) { 
             highestPriorty = ready_queue[i].process_priority; 
             priorityIdx = i;
@@ -65,7 +65,7 @@ struct PCB handle_process_completion_pp(struct PCB ready_queue[QUEUEMAX], int *q
 
     // shift queue elems & update queue counter
     (*queue_cnt)--;
-    for (i=priorityIdx; i < *queue_cnt; i++) {
+    for (int i = priorityIdx; i < *queue_cnt; i++) {
         ready_queue[i] = ready_queue[i+1];
     }
 
@@ -102,8 +102,8 @@ struct PCB handle_process_completion_srtp(struct PCB ready_queue[QUEUEMAX], int 
     if (!*queue_cnt) { return NULLPCB; }
 
     // search the next PCB
-    int i, smallestBurst = INT_MAX, burstIdx = 0;
-    for (i = 0; i < *queue_cnt; i++) {
+    int smallestBurst = INT_MAX, burstIdx = 0;
+    for (int i = 0; i < *queue_cnt; i++) {
         if (ready_queue[i].remaining_bursttime < smallestBurst) { 
             smallestBurst = ready_queue[i].remaining_bursttime;
             burstIdx = i;
@@ -115,7 +115,7 @@ struct PCB handle_process_completion_srtp(struct PCB ready_queue[QUEUEMAX], int 
 
     // shift queue elems & update queue counter
     (*queue_cnt)--;
-    for (i=burstIdx; i < *queue_cnt; i++) {
+    for (int i = burstIdx; i < *queue_cnt; i++) {
         ready_queue[i] = ready_queue[i+1];
     }
 
@@ -143,8 +143,8 @@ struct PCB handle_process_completion_rr(struct PCB ready_queue[QUEUEMAX], int *q
     if (!*queue_cnt) { return NULLPCB; }
 
     // search the next PCB
-    int i, earliestTime = INT_MAX, timeIdx = 0;
-    for (i = 0; i < *queue_cnt; i++) {
+    int earliestTime = INT_MAX, timeIdx = 0;
+    for (int i = 0; i < *queue_cnt; i++) {
         if (ready_queue[i].arrival_timestamp < earliestTime) { 
             earliestTime = ready_queue[i].arrival_timestamp;
             timeIdx = i;
@@ -156,7 +156,7 @@ struct PCB handle_process_completion_rr(struct PCB ready_queue[QUEUEMAX], int *q
 
     // shift queue elems & update queue counter
     (*queue_cnt)--;
-    for (i=timeIdx; i < *queue_cnt; i++) {
+    for (int i = timeIdx; i < *queue_cnt; i++) {
         ready_queue[i] = ready_queue[i+1];
     }
 

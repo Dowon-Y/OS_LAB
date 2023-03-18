@@ -24,7 +24,7 @@ int process_page_access_fifo(struct PTE page_table[TABLEMAX],int *table_cnt, int
 
     // case 3: page being referenced is not in memory & there are no free frames
     int lowest_AT_index = -1;
-    for (int i=1; i<*table_cnt; i++) {
+    for (int i=0; i<*table_cnt; i++) {
         if (page_table[i].is_valid) {
             if (lowest_AT_index < 0) { lowest_AT_index = i; }
             else if (page_table[i].arrival_timestamp < page_table[lowest_AT_index].arrival_timestamp) { lowest_AT_index = i; }
@@ -43,7 +43,14 @@ int process_page_access_fifo(struct PTE page_table[TABLEMAX],int *table_cnt, int
 } 
 
 int count_page_faults_fifo(struct PTE page_table[TABLEMAX],int table_cnt, int refrence_string[REFERENCEMAX], int reference_cnt, int frame_pool[POOLMAX],int frame_cnt) {
-    return 0;
+    int current_timestamp = 1;
+    int total_fault = 0;
+    for (int i=0; i<reference_cnt; i++) {
+        int page_number = refrence_string[i];
+        if (!page_table[page_number].is_valid) { total_fault++; }
+        process_page_access_fifo(page_table, &table_cnt, page_number, frame_pool, &frame_cnt, current_timestamp);
+    }
+    return total_fault;
 }
 
 int process_page_access_lru(struct PTE page_table[TABLEMAX],int *table_cnt, int page_number, int frame_pool[POOLMAX],int *frame_cnt, int current_timestamp) {

@@ -15,7 +15,7 @@ int _handle_free_frame(struct PTE page_table[TABLEMAX], int page_number, int cur
     return page_table[page_number].frame_number;
 }
 
-int _assgin_and_kill_frame(struct PTE page_table[TABLEMAX], int page_number, int current_timestamp, int page_to_be_killed) {
+int _assgin_new_page(struct PTE page_table[TABLEMAX], int page_number, int current_timestamp, int page_to_be_killed) {
     page_table[page_number].is_valid = 1;
     page_table[page_number].frame_number = page_table[page_to_be_killed].frame_number;
     page_table[page_number].arrival_timestamp = current_timestamp; 
@@ -46,7 +46,7 @@ int process_page_access_fifo(struct PTE page_table[TABLEMAX], int *table_cnt, in
         }
     }
     if (lowest_AT_index >= 0) {
-        return _assgin_and_kill_frame(page_table, page_number, current_timestamp, lowest_AT_index);
+        return _assgin_new_page(page_table, page_number, current_timestamp, lowest_AT_index);
     }
     return -1;
 } 
@@ -80,7 +80,7 @@ int process_page_access_lru(struct PTE page_table[TABLEMAX],int *table_cnt, int 
         }
     }
     if (lowest_LA_index >= 0) {
-        return _assgin_and_kill_frame(page_table, page_number, current_timestamp, lowest_LA_index);
+        return _assgin_new_page(page_table, page_number, current_timestamp, lowest_LA_index);
     }
     return -1;
 }
@@ -117,7 +117,7 @@ int process_page_access_lfu(struct PTE page_table[TABLEMAX],int *table_cnt, int 
         }
     }
     if (lowest_RC_index >= 0) {
-        return _assgin_and_kill_frame(page_table, page_number, current_timestamp, lowest_RC_index);
+        return _assgin_new_page(page_table, page_number, current_timestamp, lowest_RC_index);
     }
     return -1;
 }

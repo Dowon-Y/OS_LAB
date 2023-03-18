@@ -25,10 +25,20 @@ void _remove_from_RCB_queue(struct RCB request_queue[QUEUEMAX],int *queue_cnt, i
     (*queue_cnt)--;
 }
 
-struct RCB handle_request_arrival_fcfs(struct RCB request_queue[QUEUEMAX], int *queue_cnt, struct RCB current_request, struct RCB new_request, int timestamp) {
+int _get_distance(int first_cylindar, int second_cylindar) {
+    int dist = first_cylindar - second_cylindar;
+    if (dist < 0) {return -dist; }
+    return dist;
+}
+
+struct RCB _handle_request_arrival(struct RCB request_queue[QUEUEMAX], int *queue_cnt, struct RCB current_request, struct RCB new_request, int timestamp) {
     if(_is_null_RCB(current_request)) { return new_request; }
     request_queue[(*queue_cnt)++] = new_request;
     return current_request;
+}
+
+struct RCB handle_request_arrival_fcfs(struct RCB request_queue[QUEUEMAX], int *queue_cnt, struct RCB current_request, struct RCB new_request, int timestamp) {
+    return _handle_request_arrival(request_queue, queue_cnt, current_request, new_request, timestamp);
 }
 
 struct RCB handle_request_completion_fcfs(struct RCB request_queue[QUEUEMAX],int *queue_cnt) {
@@ -44,15 +54,30 @@ struct RCB handle_request_completion_fcfs(struct RCB request_queue[QUEUEMAX],int
     return next_RCB;
 } 
 
-struct RCB handle_request_arrival_sstf(struct RCB request_queue[QUEUEMAX],int *queue_cnt, struct RCB current_request, struct RCB new_request, int timestamp) {
-    return NULLRCB;
+struct RCB handle_request_arrival_sstf(struct RCB request_queue[QUEUEMAX], int *queue_cnt, struct RCB current_request, struct RCB new_request, int timestamp) {
+    return _handle_request_arrival(request_queue, queue_cnt, current_request, new_request, timestamp);
 }
+
 struct RCB handle_request_completion_sstf(struct RCB request_queue[QUEUEMAX],int *queue_cnt,int current_cylinder) {
-    return NULLRCB;
+    if (*queue_cnt == 0) { return NULLRCB; }
+    int closest_cylinder_index = 0;
+    for (int i=1; i<*queue_cnt; i++) {
+        if (_get_distance(request_queue[i].cylinder, current_cylinder) < _get_distance(request_queue[closest_cylinder_index].cylinder, current_cylinder)) {
+            closest_cylinder_index = i;
+        }
+        if (_get_distance(request_queue[i].cylinder, current_cylinder) == _get_distance(request_queue[closest_cylinder_index].cylinder, current_cylinder)) {
+            closest_cylinder_index = request_queue[i].arrival_timestamp < request_queue[closest_cylinder_index].arrival_timestamp ? i : closest_cylinder_index;
+        }
+    }
+    struct RCB next_RCB = request_queue[closest_cylinder_index];
+    _remove_from_RCB_queue(request_queue, queue_cnt, closest_cylinder_index);
+    return next_RCB;
 }
-struct RCB handle_request_arrival_look(struct RCB request_queue[QUEUEMAX],int *queue_cnt, struct RCB current_request, struct RCB new_request, int timestamp) {
-    return NULLRCB;
+
+struct RCB handle_request_arrival_look(struct RCB request_queue[QUEUEMAX], int *queue_cnt, struct RCB current_request, struct RCB new_request, int timestamp) {
+    return _handle_request_arrival(request_queue, queue_cnt, current_request, new_request, timestamp);
 }
+
 struct RCB handle_request_completion_look(struct RCB request_queue[QUEUEMAX],int *queue_cnt, int current_cylinder, int scan_direction) {
     return NULLRCB;
 }

@@ -1,28 +1,29 @@
 #include "oslabs.h"
 
-int process_page_access_fifo(struct PTE page_table[TABLEMAX],int *table_cnt, int page_number, int frame_pool[POOLMAX], int *frame_cnt, int current_timestamp) {
-    // case 1: page being referenced is already in memory
-    /* ---- shared code for case 1, 2, 3 -----*/
+int _handle_page_in_memory(struct PTE page_table[TABLEMAX], int page_number, int current_timestamp) {
     page_table[page_number].last_access_timestamp = current_timestamp;
-    /* ---------------------------------------*/
-    if (page_table[page_number].is_valid) {
-        page_table[page_number].reference_count++;
-        return page_table[page_number].frame_number;
-    }
-    
-    // case 2: page not in memory & there are any free frames
-     /* ------ shared code for case 2, 3 ------*/
+    page_table[page_number].reference_count++;
+    return page_table[page_number].frame_number;
+}
+
+int _handle_free_frame(struct PTE page_table[TABLEMAX], int page_number, int current_timestamp, int frame_pool[POOLMAX], int *frame_cnt) {
     page_table[page_number].is_valid = 1;
+    page_table[page_number].frame_number = frame_pool[--(*frame_cnt)];
     page_table[page_number].arrival_timestamp = current_timestamp; 
     page_table[page_number].last_access_timestamp = current_timestamp;
     page_table[page_number].reference_count = 1;
-     /* ---------------------------------------*/
-    if (*frame_cnt > 0) {
-        page_table[page_number].frame_number = frame_pool[--(*frame_cnt)];
-        return page_table[page_number].frame_number;
-    }
+    return page_table[page_number].frame_number;
+}
 
-    // case 3: page being referenced is not in memory & there are no free frames
+int process_page_access_fifo(struct PTE page_table[TABLEMAX], int *table_cnt, int page_number, int frame_pool[POOLMAX], int *frame_cnt, int current_timestamp) {
+    if (page_table[page_number].is_valid) {
+        return _handle_page_in_memory(page_table, page_number, current_timestamp);
+    }
+    
+    if (*frame_cnt > 0) {
+        return _handle_free_frame(page_table, page_number, current_timestamp, frame_pool, frame_cnt);
+    }
+    
     int lowest_AT_index = -1;
     for (int i=0; i<*table_cnt; i++) {
         if (page_table[i].is_valid) {
@@ -31,7 +32,11 @@ int process_page_access_fifo(struct PTE page_table[TABLEMAX],int *table_cnt, int
         }
     }
     if (lowest_AT_index >= 0) {
+        page_table[page_number].is_valid = 1;
         page_table[page_number].frame_number = page_table[lowest_AT_index].frame_number;
+        page_table[page_number].arrival_timestamp = current_timestamp; 
+        page_table[page_number].last_access_timestamp = current_timestamp;
+        page_table[page_number].reference_count = 1;
         page_table[lowest_AT_index].is_valid = 0;
         page_table[lowest_AT_index].frame_number = -1;
         page_table[lowest_AT_index].arrival_timestamp = -1;
@@ -46,6 +51,7 @@ int count_page_faults_fifo(struct PTE page_table[TABLEMAX],int table_cnt, int re
     int current_timestamp = 1;
     int total_fault = 0;
     for (int i=0; i<reference_cnt; i++) {
+        current_timestamp++;
         int page_number = refrence_string[i];
         if (!page_table[page_number].is_valid) { total_fault++; }
         process_page_access_fifo(page_table, &table_cnt, page_number, frame_pool, &frame_cnt, current_timestamp);

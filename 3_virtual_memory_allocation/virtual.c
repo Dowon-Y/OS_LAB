@@ -98,9 +98,38 @@ int count_page_faults_lru(struct PTE page_table[TABLEMAX],int table_cnt, int ref
 }
 
 int process_page_access_lfu(struct PTE page_table[TABLEMAX],int *table_cnt, int page_number, int frame_pool[POOLMAX], int *frame_cnt, int current_timestamp) {
-    return 0;
+    if (page_table[page_number].is_valid) {
+        return _handle_page_in_memory(page_table, page_number, current_timestamp);
+    }
+    
+    if (*frame_cnt > 0) {
+        return _handle_free_frame(page_table, page_number, current_timestamp, frame_pool, frame_cnt);
+    }
+
+    int lowest_RC_index = -1;
+    for (int i=0; i<*table_cnt; i++) {
+        if (page_table[i].is_valid) {
+            if (lowest_RC_index < 0) { lowest_RC_index = i; }
+            else if (page_table[i].reference_count < page_table[lowest_RC_index].reference_count) { lowest_RC_index = i; }
+            else if (page_table[i].reference_count == page_table[lowest_RC_index].reference_count) {
+                lowest_RC_index = page_table[i].arrival_timestamp < page_table[lowest_RC_index].arrival_timestamp ? i : lowest_RC_index;
+            }
+        }
+    }
+    if (lowest_RC_index >= 0) {
+        return _assgin_and_kill_frame(page_table, page_number, current_timestamp, lowest_RC_index);
+    }
+    return -1;
 }
 
 int count_page_faults_lfu(struct PTE page_table[TABLEMAX],int table_cnt, int refrence_string[REFERENCEMAX],int reference_cnt,int frame_pool[POOLMAX],int frame_cnt) {
-    return 0;
+    int current_timestamp = 1;
+    int total_fault = 0;
+    for (int i=0; i<reference_cnt; i++) {
+        current_timestamp++;
+        int page_number = refrence_string[i];
+        if (!page_table[page_number].is_valid) { total_fault++; }
+        process_page_access_lfu(page_table, &table_cnt, page_number, frame_pool, &frame_cnt, current_timestamp);
+    }
+    return total_fault;
 }
